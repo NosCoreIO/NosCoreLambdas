@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -44,49 +45,79 @@ namespace NosCore.Travis
             var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
             var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
             var normal = Environment.GetEnvironmentVariable("dev_webhook");
-            foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
+            if (input.Travis_Branch == "master")
             {
-                var reply = text;
-                var start = $"CheckEveryLanguageValueSet ({type})";
-                var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
-                var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
-                var leng = pTo < 0 ? 0 : pTo;
-                var result = reply.Substring(pFrom, leng);
-                var results = reply.IndexOf(start) > 0 ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
-                var webhook = country[type];
-                object values;
-                if (results.Any())
+                foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
                 {
-                    var color = 15158332;
-                    values = new DiscordObject
+                    var reply = text;
+                    var start = $"CheckEveryLanguageValueSet ({type})";
+                    var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
+                    var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
+                    var leng = pTo < 0 ? 0 : pTo;
+                    var result = reply.Substring(pFrom, leng);
+                    var results = reply.IndexOf(start) > 0
+                        ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
+                    var webhook = country[type];
+                    object values;
+                    if (results.Any())
                     {
-                        Username = "",
-                        Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
-                        Embeds = new List<Embed> { new Embed() {
-                        Color = color,
-                        Description = results.Aggregate((a, b) => a + '\n' + b),
-                        Timestamp = DateTime.Now,
-                        Title = $"Language {type} Translation Missing!",
-                    } }
-                    };
-                }
-                else
-                {
-                    var color = 3066993;
-                    values = new DiscordObject
-                    {
-                        Username = "",
-                        Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                        Embeds = new List<Embed> { new Embed() {
-                        Color = color,
-                        Timestamp = DateTime.Now,
-                        Title = $"Not Any Language {type} Translation Missing!",
-                    } }
+                        var color = 15158332;
+                        var description = new List<string>();
+                        int index = 0;
+                        foreach (var lkey in results)
+                        {
+                            if (description[index].Length + (lkey + '\n').Length >= 2000)
+                            {
+                                index++;
+                            }
 
-                    };
+                            if (description[index] == null)
+                            {
+                                description[index] = string.Empty;
+                            }
+
+                            description[index] += lkey + '\n';
+                        }
+
+                        for (index = 0; index < description.Count; index++)
+                        {
+                            var embed = new Embed()
+                            {
+                                Color = color,
+                                Description = results.Aggregate((a, b) => a + '\n' + b),
+                                Timestamp = DateTime.Now,
+                            };
+                            if (index == 0)
+                            {
+                                embed.Title = $"Language {type} Translation Missing!";
+                            }
+
+                            SendToDiscord(webhook, new DiscordObject
+                            {
+                                Username = "",
+                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                                Embed = embed
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var color = 3066993;
+                        SendToDiscord(webhook, new DiscordObject
+                        {
+                            Username = "",
+                            Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                            Embed = new Embed()
+                            {
+                                Color = color,
+                                Timestamp = DateTime.Now,
+                                Title = $"Not Any Language {type} Translation Missing!",
+                            }
+
+                        }
+                        );
+                    }
                 }
-                if (input.Travis_Branch == "master")
-                    SendToDiscord(webhook, values);
             }
 
             string status;
@@ -109,13 +140,14 @@ namespace NosCore.Travis
             {
                 Username = "",
                 Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-1.png",
-                Embeds = new List<Embed> { new Embed() {
+                Embed = new Embed()
+                {
                     URL = input.Travis_Pull_Request ? "https://github.com/" + input.Travis_Repo_Slug + $"/pull/{input.Travis_Pull_Request}" : "",
-                    Author= new Author()
+                    Author = new Author()
                     {
-                        Name= $"Tests {status} (Build #{input.Build_Id}) - {input.Travis_Repo_Slug}",
-                        Icon_url =icourl,
-                        Url = "https://travis-ci.org/"+input.Travis_Repo_Slug+$"/builds/{input.Build_Id}"
+                        Name = $"Tests {status} (Build #{input.Build_Id}) - {input.Travis_Repo_Slug}",
+                        Icon_url = icourl,
+                        Url = "https://travis-ci.org/" + input.Travis_Repo_Slug + $"/builds/{input.Build_Id}"
                     },
                     Color = colortest,
                     Timestamp = DateTime.Now,
@@ -138,7 +170,7 @@ namespace NosCore.Travis
 
                         }
                     }
-                } }
+                }
             });
             return "OK";
         }

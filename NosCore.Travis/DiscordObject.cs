@@ -14,6 +14,6 @@ namespace NosCore.Travis
 
         public string File { get; set; }
 
-        public List<Embed> Embeds { get; set; }
+        public Embed Embed { get; set; }
     }
 }
