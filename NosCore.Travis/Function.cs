@@ -58,47 +58,41 @@ namespace NosCore.Travis
                     var results = reply.IndexOf(start) > 0
                         ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
                     var webhook = country[type];
-                    object values;
                     if (results.Any())
                     {
                         var color = 15158332;
-                        var description = new List<string>();
-                        int index = 0;
+                        var description = new List<string>() { string.Empty };
                         foreach (var lkey in results)
                         {
-                            if (description[index].Length + (lkey + '\n').Length >= 2000)
+                            if (description.Last().Length + (lkey + '\n').Length >= 2000)
                             {
-                                index++;
+                                description.Add(string.Empty);
                             }
 
-                            if (description[index] == null)
-                            {
-                                description[index] = string.Empty;
-                            }
-
-                            description[index] += lkey + '\n';
+                            description[description.Count - 1] += lkey + '\n';
                         }
 
-                        for (index = 0; index < description.Count; index++)
+                        var embeds = new List<Embed>();
+                        for (int index = 0; index < description.Count; index++)
                         {
                             var embed = new Embed()
                             {
                                 Color = color,
-                                Description = results.Aggregate((a, b) => a + '\n' + b),
+                                Description = description[index],
                                 Timestamp = DateTime.Now,
                             };
                             if (index == 0)
                             {
                                 embed.Title = $"Language {type} Translation Missing!";
                             }
-
-                            SendToDiscord(webhook, new DiscordObject
-                            {
-                                Username = "",
-                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
-                                Embed = embed
-                            });
+                            embeds.Add(embed);
                         }
+                        SendToDiscord(webhook, new DiscordObject
+                        {
+                            Username = "",
+                            Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                            Embeds = embeds
+                        });
                     }
                     else
                     {
@@ -107,13 +101,12 @@ namespace NosCore.Travis
                         {
                             Username = "",
                             Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                            Embed = new Embed()
+                            Embeds = new List<Embed>{new Embed()
                             {
                                 Color = color,
                                 Timestamp = DateTime.Now,
                                 Title = $"Not Any Language {type} Translation Missing!",
-                            }
-
+                            }}
                         }
                         );
                     }
@@ -140,7 +133,8 @@ namespace NosCore.Travis
             {
                 Username = "",
                 Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-1.png",
-                Embed = new Embed()
+                Embeds = new List<Embed>
+                {  new Embed()
                 {
                     URL = input.Travis_Pull_Request ? "https://github.com/" + input.Travis_Repo_Slug + $"/pull/{input.Travis_Pull_Request}" : "",
                     Author = new Author()
@@ -170,7 +164,7 @@ namespace NosCore.Travis
 
                         }
                     }
-                }
+                }}
             });
             return "OK";
         }
