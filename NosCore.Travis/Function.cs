@@ -171,12 +171,15 @@ namespace NosCore.Travis
                             }
                             embeds.Add(embed);
                         }
-                        SendToDiscord(webhook, new DiscordObject
+                        if (embeds.Any())
                         {
-                            Username = "",
-                            Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                            Embeds = embeds
-                        });
+                            SendToDiscord(webhook, new DiscordObject
+                            {
+                                Username = "",
+                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                                Embeds = embeds
+                            });
+                        }
                     }
                     else
                     {
