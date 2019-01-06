@@ -145,10 +145,13 @@ namespace NosCore.Travis
                             {
                                 embed.Title = $"Language {type} Translation Missing!";
                             }
-                            embeds.Add(embed);
+                            if (description[index] != string.Empty)
+                            {
+                                embeds.Add(embed);
+                            }
                         }
 
-                        if (embeds.Any())
+                        if (description.Any())
                         {
                             SendToDiscord(webhook, new DiscordObject
                             {
@@ -174,7 +177,10 @@ namespace NosCore.Travis
                             {
                                 embed.Title = $"Language {type} Translated!";
                             }
-                            embeds.Add(embed);
+                            if (descriptiontranslated[index] != string.Empty)
+                            {
+                                embeds.Add(embed);
+                            }
                         }
                         if (embeds.Any())
                         {
