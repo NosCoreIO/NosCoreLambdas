@@ -4,12 +4,18 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Amazon.Internal;
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -19,14 +25,65 @@ namespace NosCore.Travis
     public class Function
     {
         private static readonly HttpClient Client = new HttpClient();
+        private const string BucketName = "noscoretranslation";
+        private const string KeyName = "missing_translation.json";
+        private static IAmazonS3 _client;
 
         public string FunctionHandler(InputObject input, ILambdaContext context)
         {
             return TravisCheck(input).Result;
         }
 
+        static async Task<Dictionary<RegionType, List<string>>> GetS3File()
+        {
+            _client = new AmazonS3Client(new BasicAWSCredentials(Environment.GetEnvironmentVariable("accesskey"),
+                    Environment.GetEnvironmentVariable("secretkey")),
+                RegionEndpoint.USWest2);
+
+            GetObjectRequest request = new GetObjectRequest
+            {
+                BucketName = BucketName,
+                Key = KeyName
+            };
+            using (GetObjectResponse response = await _client.GetObjectAsync(request))
+            using (Stream responseStream = response.ResponseStream)
+            using (StreamReader reader = new StreamReader(responseStream))
+            {
+                return JsonConvert.DeserializeObject<Dictionary<RegionType, List<string>>>(reader.ReadToEnd()); // Now you process the response body.
+            }
+        }
+
+        static async Task UploadS3(Dictionary<RegionType, List<string>> list)
+        {
+            _client = new AmazonS3Client(new BasicAWSCredentials(Environment.GetEnvironmentVariable("accesskey"),
+                    Environment.GetEnvironmentVariable("secretkey")),
+                RegionEndpoint.USWest2);
+            var stringtoupload = JsonConvert.SerializeObject(list);
+            PutObjectRequest putRequest = new PutObjectRequest
+            {
+                BucketName = BucketName,
+                Key = KeyName,
+                ContentType = "text/json",
+                InputStream = new MemoryStream(Encoding.UTF8.GetBytes(stringtoupload))
+            };
+
+            await _client.PutObjectAsync(putRequest);
+        }
+
         static async Task<string> TravisCheck(InputObject input)
         {
+            var newList = new Dictionary<RegionType, List<string>>
+            {
+                {RegionType.FR, new List<string>()},
+                {RegionType.TR, new List<string>()},
+                {RegionType.EN, new List<string>()},
+                {RegionType.CS, new List<string>()},
+                {RegionType.ES, new List<string>()},
+                {RegionType.PL, new List<string>()},
+                {RegionType.IT, new List<string>()},
+                {RegionType.DE, new List<string>()}
+            };
+            var oldList = GetS3File().Result;
             var address = "https://github.com/" + input.Travis_Repo_Slug + "/commit/" + input.Travis_Commit;
             var textgithub = await Client.GetStringAsync(address);
             var patternBuilder = new StringBuilder();
@@ -68,8 +125,11 @@ namespace NosCore.Travis
                             {
                                 description.Add(string.Empty);
                             }
-
-                            description[description.Count - 1] += lkey + '\n';
+                            newList[type].Add(lkey);
+                            if (!oldList[type].Exists(s => s == lkey))
+                            {
+                                description[description.Count - 1] += lkey + '\n';
+                            }
                         }
 
                         var embeds = new List<Embed>();
@@ -93,22 +153,49 @@ namespace NosCore.Travis
                             Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
                             Embeds = embeds
                         });
-                    }
-                    else
-                    {
-                        var color = 3066993;
+                        UploadS3(newList).Wait();
+                        //TODO has been translated
+                        var descriptiontranslated = oldList[type].Except(newList[type]).ToList();
+                        embeds = new List<Embed>();
+                        for (int index = 0; index < descriptiontranslated.Count; index++)
+                        {
+                            var embed = new Embed()
+                            {
+                                Color = 3066993,
+                                Description = $"~~{descriptiontranslated[index]}~~",
+                                Timestamp = DateTime.Now,
+                            };
+                            if (index == 0)
+                            {
+                                embed.Title = $"Language {type} Translated!";
+                            }
+                            embeds.Add(embed);
+                        }
                         SendToDiscord(webhook, new DiscordObject
                         {
                             Username = "",
                             Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                            Embeds = new List<Embed>{new Embed()
+                            Embeds = embeds
+                        });
+                    }
+                    else
+                    {
+                        if (oldList[type].Any())
+                        {
+                            var color = 3066993;
+                            SendToDiscord(webhook, new DiscordObject
+                            {
+                                Username = "",
+                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                                Embeds = new List<Embed>{new Embed()
                             {
                                 Color = color,
                                 Timestamp = DateTime.Now,
                                 Title = $"Not Any Language {type} Translation Missing!",
                             }}
+                            }
+                            );
                         }
-                        );
                     }
                 }
             }
