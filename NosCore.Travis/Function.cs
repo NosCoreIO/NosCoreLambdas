@@ -4,6 +4,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -102,99 +103,51 @@ namespace NosCore.Travis
             var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
             var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
             var normal = Environment.GetEnvironmentVariable("dev_webhook");
-            if (input.Travis_Branch == "master")
+            string status;
+            int colortest;
+            string icourl;
+            if (input.Travis_Test_Result == 0)
             {
-                foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
+                if (input.Travis_Branch == "master")
                 {
-                    var reply = text;
-                    var start = $"CheckEveryLanguageValueSet ({type})";
-                    var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
-                    var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
-                    var leng = pTo < 0 ? 0 : pTo;
-                    var result = reply.Substring(pFrom, leng);
-                    var results = reply.IndexOf(start) > 0
-                        ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
-                    var webhook = country[type];
-                    if (results.Any())
+                    foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
                     {
-                        var color = 15158332;
-                        var description = new List<string>() { string.Empty };
-                        foreach (var lkey in results)
+                        var reply = text;
+                        var start = $"CheckEveryLanguageValueSet ({type})";
+                        var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
+                        var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
+                        var leng = pTo < 0 ? 0 : pTo;
+                        var result = reply.Substring(pFrom, leng);
+                        var results = reply.IndexOf(start) > 0
+                            ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
+                        var webhook = country[type];
+                        if (results.Any())
                         {
-                            if (description.Last().Length + (lkey + '\n').Length >= 2000)
-                            {
-                                description.Add(string.Empty);
-                            }
-                            newList[type].Add(lkey);
-                            if (!oldList[type].Exists(s => s == lkey))
-                            {
-                                description[description.Count - 1] += lkey + '\n';
-                            }
-                        }
+                            var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332, oldList[type], newList[type], false);
 
-                        var embeds = new List<Embed>();
-                        for (int index = 0; index < description.Count; index++)
-                        {
-                            var embed = new Embed()
+                            if (embeds.Any())
                             {
-                                Color = color,
-                                Description = description[index],
-                                Timestamp = DateTime.Now,
-                            };
-                            if (index == 0)
-                            {
-                                embed.Title = $"Language {type} Translation Missing!";
+                                SendToDiscord(webhook, new DiscordObject
+                                {
+                                    Username = "",
+                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                                    Embeds = embeds
+                                });
                             }
-                            if (description[index] != string.Empty)
-                            {
-                                embeds.Add(embed);
-                            }
-                        }
 
-                        if (description.Any())
-                        {
-                            SendToDiscord(webhook, new DiscordObject
+                            UploadS3(newList).Wait();
+                            embeds = CreateEmbeds(oldList[type].Except(newList[type]).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), new List<string>(), true);
+                            if (embeds.Any())
                             {
-                                Username = "",
-                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
-                                Embeds = embeds
-                            });
-                        }
-
-                        UploadS3(newList).Wait();
-                        //TODO has been translated
-                        var descriptiontranslated = oldList[type].Except(newList[type]).ToList();
-                        embeds = new List<Embed>();
-                        for (int index = 0; index < descriptiontranslated.Count; index++)
-                        {
-                            var embed = new Embed()
-                            {
-                                Color = 3066993,
-                                Description = $"~~{descriptiontranslated[index]}~~",
-                                Timestamp = DateTime.Now,
-                            };
-                            if (index == 0)
-                            {
-                                embed.Title = $"Language {type} Translated!";
-                            }
-                            if (descriptiontranslated[index] != string.Empty)
-                            {
-                                embeds.Add(embed);
+                                SendToDiscord(webhook, new DiscordObject
+                                {
+                                    Username = "",
+                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                                    Embeds = embeds
+                                });
                             }
                         }
-                        if (embeds.Any())
-                        {
-                            SendToDiscord(webhook, new DiscordObject
-                            {
-                                Username = "",
-                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                                Embeds = embeds
-                            });
-                        }
-                    }
-                    else
-                    {
-                        if (oldList[type].Any())
+                        else if (oldList[type].Any())
                         {
                             var color = 3066993;
                             SendToDiscord(webhook, new DiscordObject
@@ -212,13 +165,8 @@ namespace NosCore.Travis
                         }
                     }
                 }
-            }
 
-            string status;
-            int colortest;
-            string icourl;
-            if (input.Travis_Test_Result == 0)
-            {
+
                 status = "Passed";
                 colortest = 3066993;
                 icourl = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png";
@@ -268,6 +216,44 @@ namespace NosCore.Travis
                 }}
             });
             return "OK";
+        }
+
+        private static List<Embed> CreateEmbeds(string[] results, string title, int color, List<string> newList, List<string> oldList, bool remove)
+        {
+            var description = new List<string>() { string.Empty };
+            foreach (var lkey in results)
+            {
+                if (description.Last().Length + (lkey + '\n').Length >= 2000)
+                {
+                    description.Add(string.Empty);
+                }
+                newList.Add(lkey);
+                if (!oldList.Exists(s => s == lkey))
+                {
+                    description[description.Count - 1] += lkey + '\n';
+                }
+            }
+
+            var embeds = new List<Embed>();
+            for (int index = 0; index < description.Count; index++)
+            {
+                var embed = new Embed()
+                {
+                    Color = color,
+                    Description = remove ? $"~~{description[index]}~~" : description[index],
+                    Timestamp = DateTime.Now,
+                };
+                if (index == 0)
+                {
+                    embed.Title = title;
+                }
+                if (description[index] != string.Empty)
+                {
+                    embeds.Add(embed);
+                }
+            }
+
+            return embeds;
         }
 
         private static HttpResponseMessage SendToDiscord(string webhook, object values)
