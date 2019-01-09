@@ -136,7 +136,7 @@ namespace NosCore.Travis
                                 });
                             }
                             var emptylist = new List<string>();
-                            embeds = CreateEmbeds(oldList[type].Except(newList[type]).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), true,ref emptylist);
+                            embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), true,ref emptylist);
                             if (embeds.Any())
                             {
                                 SendToDiscord(webhook, new DiscordObject
