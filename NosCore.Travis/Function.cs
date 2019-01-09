@@ -121,9 +121,10 @@ namespace NosCore.Travis
                         var results = reply.IndexOf(start) > 0
                             ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
                         var webhook = country[type];
+                        var newlist = new List<string>();
                         if (results.Any())
                         {
-                            var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332, oldList[type], newList[type], false);
+                            var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332, oldList[type], false, ref newlist);
 
                             if (embeds.Any())
                             {
@@ -134,8 +135,8 @@ namespace NosCore.Travis
                                     Embeds = embeds
                                 });
                             }
-                            
-                            embeds = CreateEmbeds(oldList[type].Except(newList[type]).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), new List<string>(), true);
+                            var emptylist = new List<string>();
+                            embeds = CreateEmbeds(oldList[type].Except(newList[type]).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), true,ref emptylist);
                             if (embeds.Any())
                             {
                                 SendToDiscord(webhook, new DiscordObject
@@ -145,6 +146,7 @@ namespace NosCore.Travis
                                     Embeds = embeds
                                 });
                             }
+                            newList[type] = newlist;
                         }
                         else if (oldList[type].Any())
                         {
@@ -163,6 +165,8 @@ namespace NosCore.Travis
                             );
                         }
                     }
+
+
                     UploadS3(newList).Wait();
                 }
 
@@ -218,7 +222,7 @@ namespace NosCore.Travis
             return "OK";
         }
 
-        private static List<Embed> CreateEmbeds(string[] results, string title, int color, List<string> newList, List<string> oldList, bool remove)
+        private static List<Embed> CreateEmbeds(string[] results, string title, int color, List<string> oldList, bool remove, ref List<string> newList)
         {
             var description = new List<string>() { string.Empty };
             foreach (var lkey in results)
