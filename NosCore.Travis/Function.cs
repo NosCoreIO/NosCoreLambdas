@@ -134,8 +134,7 @@ namespace NosCore.Travis
                                     Embeds = embeds
                                 });
                             }
-
-                            UploadS3(newList).Wait();
+                            
                             embeds = CreateEmbeds(oldList[type].Except(newList[type]).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), new List<string>(), true);
                             if (embeds.Any())
                             {
@@ -164,6 +163,7 @@ namespace NosCore.Travis
                             );
                         }
                     }
+                    UploadS3(newList).Wait();
                 }
 
 
