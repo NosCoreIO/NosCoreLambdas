@@ -9,6 +9,7 @@
         PL,
         ES,
         CS,
-        TR
+        TR,
+        RU
     }
 }

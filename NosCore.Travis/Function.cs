@@ -82,7 +82,8 @@ namespace NosCore.Travis
                 {RegionType.ES, new List<string>()},
                 {RegionType.PL, new List<string>()},
                 {RegionType.IT, new List<string>()},
-                {RegionType.DE, new List<string>()}
+                {RegionType.DE, new List<string>()},
+                {RegionType.RU, new List<string>()}
             };
             var oldList = GetS3File().Result;
             var address = "https://github.com/" + input.Travis_Repo_Slug + "/commit/" + input.Travis_Commit;
