@@ -1,4 +1,5 @@
 language: csharp
+dist: xenial
 sudo: required
 mono: none
 dotnet: 2.1
@@ -6,6 +7,7 @@ solution: NosCore-Discord.sln
 branches:
   only: master
 install:
+  - pip install --upgrade pip
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
