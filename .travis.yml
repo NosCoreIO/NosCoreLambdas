@@ -12,11 +12,8 @@ before_script:
 script:
   - cd NosCore.Travis
   - dotnet lambda package
-deploy:
-  provider: script
-  script: aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis/bin/Release/netcoreapp2.1/NosCore.Travis.zip
-  on:
-    branch: master
+  - cd ./NosCore.Travis/bin/Release/netcoreapp2.1/
+  - aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip
 env:
   global:
   - AWS_DEFAULT_REGION=us-west-2
