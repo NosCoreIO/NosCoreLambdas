@@ -7,15 +7,11 @@ branches:
   only: master
 install:
   - dotnet tool install -g Amazon.Lambda.Tools
-  - pip install --user awscli
 before_script:
+  - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
 script:
-  - sudo ./ecr_credentials.sh
-  - cd NosCore.Travis
-  - dotnet lambda package
-  - cd ./bin/Release/netcoreapp2.1/
-  - aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip
+  - ./scripts/publish.sh
 env:
   global:
   - AWS_DEFAULT_REGION=us-west-2
