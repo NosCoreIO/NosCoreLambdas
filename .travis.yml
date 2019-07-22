@@ -11,7 +11,12 @@ before_script:
   - export PATH="$PATH:$HOME/.dotnet/tools"
 script:
   - cd NosCore.Travis
-  - dotnet lambda deploy-function noscore-travis --region us-west-2
+  - dotnet package deploy-function noscore-travis --region us-west-2
+deploy:
+  provider: script
+  script: aws lambda update-function-code --function-name noscore-travis --zip-file ./NosCore.Travis/bin/Release/netcoreapp2.1/NosCore.Travis.zip
+  on:
+    branch: master
 env:
   global:
   - AWS_DEFAULT_REGION=us-west-2
