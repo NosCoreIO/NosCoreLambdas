@@ -6,6 +6,7 @@ branches:
   only: master
 install:
   - dotnet tool install -g Amazon.Lambda.Tools
+  - pip install --upgrade pip
   - pip install pyopenssl ndg-httpsclient pyasn1
   - pip install --user awscli
 before_script:
