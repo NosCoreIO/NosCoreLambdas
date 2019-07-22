@@ -1,0 +1,20 @@
+language: csharp
+mono: none
+dotnet: 2.1
+solution: NosCore-Discord.sln
+branches:
+  only: master
+install:
+- pip install --user awscli
+script:
+- dotnet restore
+- dotnet build
+deploy:
+  provider: script
+  script: dotnet lambda deploy-function noscore-travis --region us-west-2
+  skip_cleanup: true
+  on:
+    branch: master
+env:
+  global:
+  - AWS_DEFAULT_REGION=us-west-2
