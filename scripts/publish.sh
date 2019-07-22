@@ -14,4 +14,4 @@ EOL
 cd NosCore.Travis
 dotnet lambda package
 cd ./bin/Release/netcoreapp2.1/
-aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip
+aws lambda update-function-code --log-type None --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip
