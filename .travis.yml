@@ -9,6 +9,7 @@ install:
   - pip install --user awscli
 before_script:
   - export PATH="$PATH:$HOME/.dotnet/tools"
+  - chmod +x ecr_credentials.sh
 script:
   - ./ecr_credentials.sh
   - cd NosCore.Travis
