@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-sudo apt install python-pip
 sudo pip install --user awscli
 eval $(aws ecr get-login --region us-west-2 --no-include-email)
 
