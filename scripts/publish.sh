@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-sudo apt install python3-pip
-pip3 install --user awscli
+sudo pip install --user awscli
+eval $(aws ecr get-login --region us-west-2 --no-include-email)
 
 cd NosCore.Travis
 dotnet lambda package
