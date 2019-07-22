@@ -14,7 +14,7 @@ script:
   - dotnet lambda package
 deploy:
   provider: script
-  script: aws lambda update-function-code --function-name noscore-travis --zip-file ./NosCore.Travis/bin/Release/netcoreapp2.1/NosCore.Travis.zip
+  script: aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis/bin/Release/netcoreapp2.1/NosCore.Travis.zip
   on:
     branch: master
 env:
