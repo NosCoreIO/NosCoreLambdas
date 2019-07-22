@@ -5,10 +5,12 @@ solution: NosCore-Discord.sln
 branches:
   only: master
 install:
-- dotnet tool install -g Amazon.Lambda.Tools
+  - dotnet tool install -g Amazon.Lambda.Tools
+before_script:
+  - export PATH="$PATH:$HOME/.dotnet/tools"
 script:
-- dotnet restore
-- dotnet build
+  - dotnet restore
+  - dotnet build
 deploy:
   provider: script
   script: dotnet lambda deploy-function noscore-travis --region us-west-2
