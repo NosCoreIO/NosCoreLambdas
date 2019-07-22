@@ -6,14 +6,12 @@ solution: NosCore-Discord.sln
 branches:
   only: master
 install:
-  - sudo apt install python-pip
   - dotnet tool install -g Amazon.Lambda.Tools
   - pip install --user awscli
 before_script:
   - export PATH="$PATH:$HOME/.dotnet/tools"
-  - sudo chmod +x ecr_credentials.sh
 script:
-  - ./ecr_credentials.sh
+  - sudo ./ecr_credentials.sh
   - cd NosCore.Travis
   - dotnet lambda package
   - cd ./bin/Release/netcoreapp2.1/
