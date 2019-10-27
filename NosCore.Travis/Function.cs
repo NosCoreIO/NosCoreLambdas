@@ -1,10 +1,5 @@
-using Amazon.Lambda.Core;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,14 +7,17 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Amazon.Internal;
+using Amazon;
+using Amazon.Lambda.Core;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Amazon;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using JsonSerializer = Amazon.Lambda.Serialization.Json.JsonSerializer;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
-[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
+[assembly: LambdaSerializer(typeof(JsonSerializer))]
 
 namespace NosCore.Travis
 {
@@ -73,21 +71,96 @@ namespace NosCore.Travis
 
         static async Task<string> TravisCheck(InputObject input)
         {
-            var newList = new Dictionary<RegionType, List<string>>
+            var newList = new Dictionary<RegionType, List<string>>();
+            foreach (var type in Enum.GetValues(typeof(RegionType)).Cast<RegionType>())
             {
-                {RegionType.FR, new List<string>()},
-                {RegionType.TR, new List<string>()},
-                {RegionType.EN, new List<string>()},
-                {RegionType.CS, new List<string>()},
-                {RegionType.ES, new List<string>()},
-                {RegionType.PL, new List<string>()},
-                {RegionType.IT, new List<string>()},
-                {RegionType.DE, new List<string>()},
-                {RegionType.RU, new List<string>()}
-            };
+                newList.Add(type, new List<string>());
+            }
             var oldList = GetS3File().Result;
+            var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
+            var normal = Environment.GetEnvironmentVariable("dev_webhook");
+
+            var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
+
+            bool passed = input.Travis_Test_Result == 0;
+            if (input.Travis_Test_Result == 0 || input.Travis_Branch == "master")
+            {
+                foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
+                {
+                    var reply = text;
+                    var start = $"CheckEveryLanguageValueSet ({type})";
+                    var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
+                    var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
+                    var leng = pTo < 0 ? 0 : pTo;
+                    var result = reply.Substring(pFrom, leng);
+                    var results = reply.IndexOf(start) > 0
+                        ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
+                    var webhook = country[type];
+                    var newlist = new List<string>();
+                    if (results.Any())
+                    {
+                        var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332,
+                            oldList[type], false, ref newlist);
+
+                        if (embeds.Any())
+                        {
+                            SendToDiscord(webhook, new DiscordObject
+                            {
+                                Username = "",
+                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                                Embeds = embeds
+                            });
+                        }
+
+                        var emptylist = new List<string>();
+                        embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(),
+                            $"Language {type} Translated!", 3066993, new List<string>(), true, ref emptylist);
+                        if (embeds.Any())
+                        {
+                            SendToDiscord(webhook, new DiscordObject
+                            {
+                                Username = "",
+                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                                Embeds = embeds
+                            });
+                        }
+
+                        newList[type] = newlist;
+                    }
+                    else if (oldList[type].Any())
+                    {
+                        var color = 3066993;
+                        SendToDiscord(webhook, new DiscordObject
+                        {
+                            Username = "",
+                            Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                            Embeds = new List<Embed>
+                                    {
+                                        new Embed
+                                        {
+                                            Color = color,
+                                            Timestamp = DateTime.Now,
+                                            Title = $"Not Any Language {type} Translation Missing!"
+                                        }
+                                    }
+                        }
+                        );
+                    }
+                }
+                UploadS3(newList).Wait();
+            }
+
+            var commitDetails = await GetCommitDetails(input);
+            var discordObject = CraftDiscordObject(passed, input, commitDetails);
+            SendToDiscord(normal, discordObject);
+            return "OK";
+        }
+
+        static async Task<CommitDetails> GetCommitDetails(InputObject input)
+        {
             var address = "https://github.com/" + input.Travis_Repo_Slug + "/commit/" + input.Travis_Commit;
             var textgithub = await Client.GetStringAsync(address);
+
             var patternBuilder = new StringBuilder();
             patternBuilder.Append(@"class=""AvatarStack-body"" aria-label=""(.*)"">");
             var match = Regex.Match(textgithub, patternBuilder.ToString(), RegexOptions.Multiline | RegexOptions.IgnoreCase);
@@ -101,131 +174,67 @@ namespace NosCore.Travis
             match = Regex.Match(textgithub, patternBuilder.ToString(), RegexOptions.Multiline | RegexOptions.IgnoreCase);
             var commitMessage = match.Groups[1].ToString();
 
-            var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
-            var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
-            var normal = Environment.GetEnvironmentVariable("dev_webhook");
-            string status;
-            int colortest;
-            string icourl;
-            if (input.Travis_Test_Result == 0)
+            return new CommitDetails
             {
-                if (input.Travis_Branch == "master")
-                {
-                    foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
-                    {
-                        var reply = text;
-                        var start = $"CheckEveryLanguageValueSet ({type})";
-                        var pFrom = reply.IndexOf(start, StringComparison.Ordinal) + start.Length;
-                        var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
-                        var leng = pTo < 0 ? 0 : pTo;
-                        var result = reply.Substring(pFrom, leng);
-                        var results = reply.IndexOf(start) > 0
-                            ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
-                        var webhook = country[type];
-                        var newlist = new List<string>();
-                        if (results.Any())
-                        {
-                            var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332, oldList[type], false, ref newlist);
+                Author = authorName,
+                Subject = commitSubject,
+                Message = commitMessage
+            };
+        }
 
-                            if (embeds.Any())
-                            {
-                                SendToDiscord(webhook, new DiscordObject
-                                {
-                                    Username = "",
-                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
-                                    Embeds = embeds
-                                });
-                            }
-                            var emptylist = new List<string>();
-                            embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(), $"Language {type} Translated!", 3066993, new List<string>(), true,ref emptylist);
-                            if (embeds.Any())
-                            {
-                                SendToDiscord(webhook, new DiscordObject
-                                {
-                                    Username = "",
-                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                                    Embeds = embeds
-                                });
-                            }
-                            newList[type] = newlist;
-                        }
-                        else if (oldList[type].Any())
-                        {
-                            var color = 3066993;
-                            SendToDiscord(webhook, new DiscordObject
-                            {
-                                Username = "",
-                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
-                                Embeds = new List<Embed>{new Embed()
-                            {
-                                Color = color,
-                                Timestamp = DateTime.Now,
-                                Title = $"Not Any Language {type} Translation Missing!",
-                            }}
-                            }
-                            );
-                        }
-                    }
+        static DiscordObject CraftDiscordObject(bool passed, InputObject input, CommitDetails commitDetails)
+        {
+            var status = passed ? "Passed" : "Failed";
+            var colortest = passed ? 3066993 : 15158332;
+            var icourl = passed ? "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png" : "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png";
 
-
-                    UploadS3(newList).Wait();
-                }
-
-
-                status = "Passed";
-                colortest = 3066993;
-                icourl = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png";
-            }
-            else
-            {
-                status = "Failed";
-                colortest = 15158332;
-                icourl = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png";
-            }
-
-            SendToDiscord(normal, new DiscordObject
+            return new DiscordObject
             {
                 Username = "",
                 Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-1.png",
                 Embeds = new List<Embed>
-                {  new Embed()
                 {
-                    URL = input.Travis_Pull_Request ? "https://github.com/" + input.Travis_Repo_Slug + $"/pull/{input.Travis_Pull_Request}" : "",
-                    Author = new Author()
+                    new Embed
                     {
-                        Name = $"Tests {status} (Build #{input.Build_Id}) - {input.Travis_Repo_Slug}",
-                        Icon_url = icourl,
-                        Url = "https://travis-ci.org/" + input.Travis_Repo_Slug + $"/builds/{input.Build_Id}"
-                    },
-                    Color = colortest,
-                    Timestamp = DateTime.Now,
-                    Description = $"{commitMessage}{'\n'}{'\n'}{authorName} authored",
-                    Title = $"{commitSubject}",
-                    Fields = new List<Field>()
-                    {
-                        new Field()
+                        URL = input.Travis_Pull_Request ? "https://github.com/" + input.Travis_Repo_Slug +
+                            $"/pull/{input.Travis_Pull_Request}" : "",
+                        Author = new Author
                         {
-                            Name="Commit",
-                            Value = $"[{input.Travis_Commit}](https://github.com/"+input.Travis_Repo_Slug+$"/commit/{input.Travis_Commit})",
-                            Inline = true
-
+                            Name = $"Tests {status} (Build #{input.Build_Id}) - {input.Travis_Repo_Slug}",
+                            Icon_url = icourl,
+                            Url = "https://travis-ci.org/" + input.Travis_Repo_Slug + $"/builds/{input.Build_Id}"
                         },
-                        new Field()
+                        Color = colortest,
+                        Timestamp = DateTime.Now,
+                        Description = $"{commitDetails.Message}{'\n'}{'\n'}{commitDetails.Author} authored",
+                        Title = $"{commitDetails.Subject}",
+                        Fields = new List<Field>
                         {
-                            Name="Branch/Tag",
-                            Value = $"[{input.Travis_Branch}](https://github.com/"+input.Travis_Repo_Slug+$"/tree/{input.Travis_Branch})",
-                            Inline = true
+                            new Field
+                            {
+                                Name = "Commit",
+                                Value = $"[{input.Travis_Commit}](https://github.com/" + input.Travis_Repo_Slug +
+                                    $"/commit/{input.Travis_Commit})",
+                                Inline = true
 
+                            },
+                            new Field
+                            {
+                                Name = "Branch/Tag",
+                                Value = $"[{input.Travis_Branch}](https://github.com/" + input.Travis_Repo_Slug +
+                                    $"/tree/{input.Travis_Branch})",
+                                Inline = true
+
+                            }
                         }
                     }
-                }}
-            });
-            return "OK";
+                }
+            };
         }
 
         private static List<Embed> CreateEmbeds(string[] results, string title, int color, List<string> oldList, bool remove, ref List<string> newList)
         {
-            var description = new List<string>() { string.Empty };
+            var description = new List<string> { string.Empty };
             foreach (var lkey in results)
             {
                 if (description.Last().Length + (lkey + '\n').Length >= 2000)
@@ -242,11 +251,11 @@ namespace NosCore.Travis
             var embeds = new List<Embed>();
             for (int index = 0; index < description.Count; index++)
             {
-                var embed = new Embed()
+                var embed = new Embed
                 {
                     Color = color,
                     Description = remove ? $"~~{description[index]}~~" : description[index],
-                    Timestamp = DateTime.Now,
+                    Timestamp = DateTime.Now
                 };
                 if (index == 0)
                 {
@@ -273,7 +282,7 @@ namespace NosCore.Travis
                 ContractResolver = contractResolver,
                 Formatting = Formatting.Indented
             });
-            var buffer = System.Text.Encoding.UTF8.GetBytes(myContent);
+            var buffer = Encoding.UTF8.GetBytes(myContent);
             var byteContent = new ByteArrayContent(buffer);
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             return Client.PostAsync(webhook, byteContent).Result;

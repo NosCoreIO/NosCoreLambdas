@@ -1,6 +1,6 @@
 ﻿namespace NosCore.Travis
 {
-    public enum RegionType : int
+    public enum RegionType
     {
         EN,
         DE,
