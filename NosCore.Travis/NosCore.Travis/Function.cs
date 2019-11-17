@@ -27,7 +27,6 @@ namespace NosCore.Travis
         private const string BucketName = "noscoretranslation";
         private const string KeyName = "missing_translation.json";
         private static IAmazonS3 _client;
-
         public string FunctionHandler(InputObject input, ILambdaContext context)
         {
             return TravisCheck(input).Result;
@@ -69,7 +68,7 @@ namespace NosCore.Travis
             await _client.PutObjectAsync(putRequest);
         }
 
-        static async Task<string> TravisCheck(InputObject input)
+        public static async Task<string> TravisCheck(InputObject input)
         {
             var newList = new Dictionary<RegionType, List<string>>();
             foreach (var type in Enum.GetValues(typeof(RegionType)).Cast<RegionType>())
