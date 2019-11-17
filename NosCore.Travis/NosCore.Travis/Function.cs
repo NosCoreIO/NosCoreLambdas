@@ -27,7 +27,6 @@ namespace NosCore.Travis
         private const string BucketName = "noscoretranslation";
         private const string KeyName = "missing_translation.json";
         private static IAmazonS3 _client;
-
         public string FunctionHandler(InputObject input, ILambdaContext context)
         {
             return TravisCheck(input).Result;
@@ -69,7 +68,7 @@ namespace NosCore.Travis
             await _client.PutObjectAsync(putRequest);
         }
 
-        static async Task<string> TravisCheck(InputObject input)
+        public static async Task<string> TravisCheck(InputObject input)
         {
             var newList = new Dictionary<RegionType, List<string>>();
             foreach (var type in Enum.GetValues(typeof(RegionType)).Cast<RegionType>())
@@ -93,7 +92,7 @@ namespace NosCore.Travis
                     var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
                     var leng = pTo < 0 ? 0 : pTo;
                     var result = reply.Substring(pFrom, leng);
-                    var results = reply.IndexOf(start) > 0
+                    var results = reply.IndexOf(start, StringComparison.Ordinal) > 0
                         ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
                     var webhook = country[type];
                     var newlist = new List<string>();
@@ -127,7 +126,7 @@ namespace NosCore.Travis
 
                         newList[type] = newlist;
                     }
-                    else if (oldList[type].Any())
+                    else if (oldList[type].Any() && reply.IndexOf(start, StringComparison.Ordinal) == -1)
                     {
                         var color = 3066993;
                         SendToDiscord(webhook, new DiscordObject
@@ -145,6 +144,10 @@ namespace NosCore.Travis
                                     }
                         }
                         );
+                    }
+                    else
+                    {
+                        newList[type] = oldList[type];
                     }
                 }
                 UploadS3(newList).Wait();
