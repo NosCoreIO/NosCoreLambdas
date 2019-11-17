@@ -92,7 +92,7 @@ namespace NosCore.Travis
                     var pTo = reply.Substring(pFrom).IndexOf("Stack Trace:", StringComparison.Ordinal);
                     var leng = pTo < 0 ? 0 : pTo;
                     var result = reply.Substring(pFrom, leng);
-                    var results = reply.IndexOf(start) > 0
+                    var results = reply.IndexOf(start, StringComparison.Ordinal) > 0
                         ? result.Split($"{'\r'}{'\n'}").ToList().Skip(3).SkipLast(1).ToArray() : new string[0];
                     var webhook = country[type];
                     var newlist = new List<string>();
@@ -126,7 +126,7 @@ namespace NosCore.Travis
 
                         newList[type] = newlist;
                     }
-                    else if (oldList[type].Any())
+                    else if (oldList[type].Any() && reply.IndexOf(start, StringComparison.Ordinal) == -1)
                     {
                         var color = 3066993;
                         SendToDiscord(webhook, new DiscordObject
@@ -144,6 +144,10 @@ namespace NosCore.Travis
                                     }
                         }
                         );
+                    }
+                    else
+                    {
+                        newList[type] = oldList[type];
                     }
                 }
                 UploadS3(newList).Wait();
