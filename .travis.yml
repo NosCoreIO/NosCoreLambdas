@@ -20,7 +20,7 @@ before_script:
   - export PATH="$PATH:$HOME/.dotnet/tools"
 script:
   - dotnet --version
-  - dotnet restore
+  - dotnet restore ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj
   - dotnet build ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj -c Release
   - ./scripts/publish.sh
 env:
