@@ -12,6 +12,9 @@ before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
 script:
+  - dotnet --version
+  - dotnet restore
+  - dotnet build
   - ./scripts/publish.sh
 env:
   global:
