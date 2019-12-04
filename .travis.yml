@@ -6,7 +6,7 @@ addons:
     snaps:
       - name: dotnet-sdk
         confinement: classic
-        channel: 3.1/stable
+        channel: 2.1/stable
 solution: NosCore-Discord.sln
 branches:
   only: master
@@ -21,7 +21,7 @@ before_script:
 script:
   - dotnet --version
   - dotnet restore
-  - dotnet build
+  - dotnet build ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj -c Release
   - ./scripts/publish.sh
 env:
   global:
