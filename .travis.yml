@@ -7,6 +7,9 @@ addons:
       - name: dotnet-sdk
         confinement: classic
         channel: 3.1/stable
+      - name: dotnet-sdk-2
+        confinement: classic
+        channel: 2.1/stable
 solution: NosCore-Discord.sln
 branches:
   only: master
@@ -14,6 +17,7 @@ install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
   - export PATH="$PATH:$HOME/.local/bin"
   - sudo snap alias dotnet-sdk.dotnet dotnet
+  - sudo snap alias dotnet-sdk-2.dotnet dotnet
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
