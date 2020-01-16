@@ -84,6 +84,7 @@ namespace NosCore.Travis
             bool passed = input.Travis_Test_Result == 0;
             if (input.Travis_Test_Result == 0 || input.Travis_Branch == "master")
             {
+                var tasks = new List<Task>();
                 foreach (RegionType type in Enum.GetValues(typeof(RegionType)))
                 {
                     var reply = text;
@@ -98,21 +99,29 @@ namespace NosCore.Travis
                     var newlist = new List<string>();
                     if (results.Any())
                     {
-                        var embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332,
-                            oldList[type], false, ref newlist);
-
-                        if (embeds.Any())
+                        if (newlist.Except(oldList[type]).Any())
                         {
-                            SendToDiscord(webhook, new DiscordObject
+                            tasks.Add(Task.Run(async () =>
                             {
-                                Username = "",
-                                Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
-                                Embeds = embeds
-                            });
+                                SendToDiscord(webhook, new DiscordObject
+                                {
+                                    Username = "",
+                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                                    Content = "/clear"
+                                });
+                                await Task.Delay(10000);
+                                SendToDiscord(webhook, new DiscordObject
+                                {
+                                    Username = "",
+                                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
+                                    Embeds = CreateEmbeds(results, $"Language {type} Translation Missing!", 15158332,
+                                        new List<string>(), false, ref newlist)
+                                });
+                            }));
                         }
 
                         var emptylist = new List<string>();
-                        embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(),
+                        var embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(),
                             $"Language {type} Translated!", 3066993, new List<string>(), true, ref emptylist);
                         if (embeds.Any())
                         {
@@ -150,6 +159,8 @@ namespace NosCore.Travis
                         newList[type] = oldList[type];
                     }
                 }
+
+                Task.WaitAll(tasks.ToArray());
                 UploadS3(newList).Wait();
             }
 
