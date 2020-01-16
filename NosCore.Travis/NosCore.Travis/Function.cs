@@ -99,7 +99,7 @@ namespace NosCore.Travis
                     var newlist = new List<string>();
                     if (results.Any())
                     {
-                        if (newlist.Except(oldList[type]).Any())
+                        if (results.Except(oldList[type]).Any())
                         {
                             tasks.Add(Task.Run(async () =>
                             {
@@ -121,7 +121,7 @@ namespace NosCore.Travis
                         }
 
                         var emptylist = new List<string>();
-                        var embeds = CreateEmbeds(oldList[type].Except(newlist).ToArray(),
+                        var embeds = CreateEmbeds(oldList[type].Except(results).ToArray(),
                             $"Language {type} Translated!", 3066993, new List<string>(), true, ref emptylist);
                         if (embeds.Any())
                         {
@@ -133,7 +133,7 @@ namespace NosCore.Travis
                             });
                         }
 
-                        newList[type] = newlist;
+                        newList[type] = results.ToList();
                     }
                     else if (oldList[type].Any() && reply.IndexOf(start, StringComparison.Ordinal) == -1)
                     {
