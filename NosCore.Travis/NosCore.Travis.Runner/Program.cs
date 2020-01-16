@@ -9,9 +9,9 @@ namespace NosCore.Travis.Runner
         {
             await Function.TravisCheck(new InputObject
             {
-                Build_Id = 612970495,
+                Build_Id = 637808857,
                 Travis_Branch = "master",
-                Travis_Commit = "caba3d09527a6edff3564a1fa0662b4ed9458c10",
+                Travis_Commit = "ba21bd30589fd152126e13df30e0cc78ccdf2837",
                 Travis_Pull_Request = false,
                 Travis_Repo_Slug = "NosCoreIO/NosCore",
                 Travis_Test_Result = 1,
