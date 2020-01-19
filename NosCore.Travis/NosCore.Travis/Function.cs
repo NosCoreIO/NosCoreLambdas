@@ -198,7 +198,7 @@ namespace NosCore.Travis
             var discordName = "";
             if (commitdesc.InnerText.StartsWith("["))
             {
-                discordName = new string(commitdesc.InnerText.Skip(1).TakeWhile(s => s != ']').ToArray());
+                discordName = new string(commitdesc.InnerText.Skip(1).TakeWhile(s => s != ']').ToArray()).TrimStart('@');
             }
 
             return new CommitDetails
