@@ -12,6 +12,7 @@ using Amazon.Lambda.Core;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using JsonSerializer = Amazon.Lambda.Serialization.Json.JsonSerializer;
@@ -70,6 +71,7 @@ namespace NosCore.Travis
 
         public static async Task<string> TravisCheck(InputObject input)
         {
+            var commitDetails = await GetCommitDetails(input);
             var newList = new Dictionary<RegionType, List<string>>();
             foreach (var type in Enum.GetValues(typeof(RegionType)).Cast<RegionType>())
             {
@@ -82,6 +84,7 @@ namespace NosCore.Travis
             var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
 
             bool passed = input.Travis_Test_Result == 0;
+            var countTranslation = 0;
             if (input.Travis_Test_Result == 0 || input.Travis_Branch == "master")
             {
                 var tasks = new List<Task>();
@@ -133,6 +136,8 @@ namespace NosCore.Travis
                             });
                         }
 
+                        countTranslation = embeds.Count;
+
                         newList[type] = results.ToList();
                     }
                     else if (oldList[type].Any() && reply.IndexOf(start, StringComparison.Ordinal) == -1)
@@ -164,7 +169,15 @@ namespace NosCore.Travis
                 UploadS3(newList).Wait();
             }
 
-            var commitDetails = await GetCommitDetails(input);
+            if (countTranslation > 0 && !string.IsNullOrEmpty(commitDetails.DiscordName))
+            {
+                SendToDiscord(normal, new DiscordObject
+                {
+                    Username = "",
+                    Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
+                    Content = $"/add-points {commitDetails.DiscordName} TranslationPoint {countTranslation}"
+                });
+            }
             var discordObject = CraftDiscordObject(passed, input, commitDetails);
             SendToDiscord(normal, discordObject);
             return "OK";
@@ -175,24 +188,25 @@ namespace NosCore.Travis
             var address = "https://github.com/" + input.Travis_Repo_Slug + "/commit/" + input.Travis_Commit;
             var textgithub = await Client.GetStringAsync(address);
 
-            var patternBuilder = new StringBuilder();
-            patternBuilder.Append(@"class=""AvatarStack-body"" aria-label=""(.*)"">");
-            var match = Regex.Match(textgithub, patternBuilder.ToString(), RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            var authorName = match.Groups[1].ToString();
-            patternBuilder = new StringBuilder();
-            patternBuilder.Append(@"<title>(.*) · " + input.Travis_Repo_Slug);
-            match = Regex.Match(textgithub, patternBuilder.ToString(), RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            var commitSubject = match.Groups[1].ToString();
-            patternBuilder = new StringBuilder();
-            patternBuilder.Append(@"<div class=""commit-desc""><pre>(.*)</pre></div>");
-            match = Regex.Match(textgithub, patternBuilder.ToString(), RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            var commitMessage = match.Groups[1].ToString();
+            var document = new HtmlDocument();
+            document.LoadHtml(textgithub);
+            var collection = document.DocumentNode.SelectNodes("//*");
+            
+            var avatarbody = collection.FirstOrDefault(s => s.HasClass("AvatarStack-body"));
+            var title = collection.FirstOrDefault(s => s.Name == "title");
+            var commitdesc = collection.FirstOrDefault(s => s.HasClass("commit-desc"));
+            var discordName = "";
+            if (commitdesc.InnerText.StartsWith("["))
+            {
+                discordName = new string(commitdesc.InnerText.Skip(1).TakeWhile(s => s != ']').ToArray());
+            }
 
             return new CommitDetails
             {
-                Author = authorName,
-                Subject = commitSubject,
-                Message = commitMessage
+                Author = avatarbody.Attributes["aria-label"].Value,
+                Subject = title.InnerText,
+                Message = commitdesc.InnerText,
+                DiscordName = discordName
             };
         }
 
