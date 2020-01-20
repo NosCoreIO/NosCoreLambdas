@@ -22,7 +22,7 @@ script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
   - dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
-  - dotnet build ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj -c Release
+  - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - ./scripts/publish.sh
 env:
   global:
