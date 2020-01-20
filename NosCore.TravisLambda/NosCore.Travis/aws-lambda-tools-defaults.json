@@ -13,7 +13,7 @@
     "function-runtime" : "dotnetcore2.1",
     "function-memory-size" : 256,
     "function-timeout"     : 30,
-    "function-handler"     : "NosCore.Travis::NosCore.Travis.Function::FunctionHandler",
+    "function-handler"     : "NosCore.TravisLambda::NosCore.Travis.Function::FunctionHandler",
     "function-name"        : "noscore-travis",
     "function-role"        : "arn:aws:iam::703970026174:role/lambda_exec_noscore-travis",
     "tracing-mode"         : "PassThrough",
