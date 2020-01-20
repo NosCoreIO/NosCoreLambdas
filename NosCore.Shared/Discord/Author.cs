@@ -1,4 +1,4 @@
-﻿namespace NosCore.Travis
+﻿namespace NosCore.Shared.Discord
 {
     public class Author
     {

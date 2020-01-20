@@ -15,6 +15,10 @@ using Amazon.S3.Model;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NosCore.Shared;
+using NosCore.Shared.Discord;
+using NosCore.Shared.Enumeration;
+using NosCore.Shared.S3;
 using JsonSerializer = Amazon.Lambda.Serialization.Json.JsonSerializer;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -25,48 +29,9 @@ namespace NosCore.Travis
     public class Function
     {
         private static readonly HttpClient Client = new HttpClient();
-        private const string BucketName = "noscoretranslation";
-        private const string KeyName = "missing_translation.json";
-        private static IAmazonS3 _client;
         public string FunctionHandler(InputObject input, ILambdaContext context)
         {
             return TravisCheck(input).Result;
-        }
-
-        static async Task<Dictionary<RegionType, List<string>>> GetS3File()
-        {
-            _client = new AmazonS3Client(new BasicAWSCredentials(Environment.GetEnvironmentVariable("accesskey"),
-                    Environment.GetEnvironmentVariable("secretkey")),
-                RegionEndpoint.USWest2);
-
-            GetObjectRequest request = new GetObjectRequest
-            {
-                BucketName = BucketName,
-                Key = KeyName
-            };
-            using (GetObjectResponse response = await _client.GetObjectAsync(request))
-            using (Stream responseStream = response.ResponseStream)
-            using (StreamReader reader = new StreamReader(responseStream))
-            {
-                return JsonConvert.DeserializeObject<Dictionary<RegionType, List<string>>>(reader.ReadToEnd()); // Now you process the response body.
-            }
-        }
-
-        static async Task UploadS3(Dictionary<RegionType, List<string>> list)
-        {
-            _client = new AmazonS3Client(new BasicAWSCredentials(Environment.GetEnvironmentVariable("accesskey"),
-                    Environment.GetEnvironmentVariable("secretkey")),
-                RegionEndpoint.USWest2);
-            var stringtoupload = JsonConvert.SerializeObject(list);
-            PutObjectRequest putRequest = new PutObjectRequest
-            {
-                BucketName = BucketName,
-                Key = KeyName,
-                ContentType = "text/json",
-                InputStream = new MemoryStream(Encoding.UTF8.GetBytes(stringtoupload))
-            };
-
-            await _client.PutObjectAsync(putRequest);
         }
 
         public static async Task<string> TravisCheck(InputObject input)
@@ -77,7 +42,7 @@ namespace NosCore.Travis
             {
                 newList.Add(type, new List<string>());
             }
-            var oldList = GetS3File().Result;
+            var oldList = S3Helper.GetS3File().Result;
             var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
             var normal = Environment.GetEnvironmentVariable("dev_webhook");
 
@@ -106,14 +71,14 @@ namespace NosCore.Travis
                         {
                             tasks.Add(Task.Run(async () =>
                             {
-                                SendToDiscord(webhook, new DiscordObject
+                                DiscordHelper.SendToDiscord(webhook, new DiscordObject
                                 {
                                     Username = "",
                                     Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
                                     Content = "/clear"
                                 });
                                 await Task.Delay(10000);
-                                SendToDiscord(webhook, new DiscordObject
+                                DiscordHelper.SendToDiscord(webhook, new DiscordObject
                                 {
                                     Username = "",
                                     Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-red.png",
@@ -125,11 +90,11 @@ namespace NosCore.Travis
 
                         var emptylist = new List<string>();
                         var translatedresults = oldList[type].Except(results).ToArray();
-                        var embeds = CreateEmbeds(oldList[type].Except(results).ToArray(),
+                        var embeds = CreateEmbeds(translatedresults,
                             $"Language {type} Translated!", 3066993, new List<string>(), true, ref emptylist);
                         if (embeds.Any())
                         {
-                            SendToDiscord(webhook, new DiscordObject
+                            DiscordHelper.SendToDiscord(webhook, new DiscordObject
                             {
                                 Username = "",
                                 Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
@@ -143,7 +108,7 @@ namespace NosCore.Travis
                     else if (oldList[type].Any() && reply.IndexOf(start, StringComparison.Ordinal) == -1)
                     {
                         var color = 3066993;
-                        SendToDiscord(webhook, new DiscordObject
+                        DiscordHelper.SendToDiscord(webhook, new DiscordObject
                         {
                             Username = "",
                             Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
@@ -166,12 +131,12 @@ namespace NosCore.Travis
                 }
 
                 Task.WaitAll(tasks.ToArray());
-                UploadS3(newList).Wait();
+                S3Helper.UploadS3(newList).Wait();
             }
 
             if (countTranslation > 0 && !string.IsNullOrEmpty(commitDetails.DiscordName))
             {
-                SendToDiscord(normal, new DiscordObject
+                DiscordHelper.SendToDiscord(normal, new DiscordObject
                 {
                     Username = "",
                     Avatar_url = "https://travis-ci.org/images/logos/TravisCI-Mascot-blue.png",
@@ -179,7 +144,7 @@ namespace NosCore.Travis
                 });
             }
             var discordObject = CraftDiscordObject(passed, input, commitDetails);
-            SendToDiscord(normal, discordObject);
+            DiscordHelper.SendToDiscord(normal, discordObject);
             return "OK";
         }
 
@@ -298,31 +263,5 @@ namespace NosCore.Travis
             return embeds;
         }
 
-        private static IEnumerable<HttpResponseMessage> SendToDiscord(string webhook, DiscordObject values)
-        {
-            var embeds = values.Embeds;
-            var tasks = new List<HttpResponseMessage>();
-            for (var i = 0; (embeds == null && i == 0) || (embeds != null && i < embeds.Count); i += 3)
-            {
-                values.Embeds = embeds?.Skip(i).Take(3).ToList();
-                var contractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new CamelCaseNamingStrategy()
-                };
-
-                var myContent = JsonConvert.SerializeObject(values, new JsonSerializerSettings
-                {
-                    ContractResolver = contractResolver,
-                    Formatting = Formatting.Indented
-                });
-                var buffer = Encoding.UTF8.GetBytes(myContent);
-                var byteContent = new ByteArrayContent(buffer);
-                byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                // we want to keep message in a consistent order.
-                tasks.Add(Client.PostAsync(webhook, byteContent).Result);
-            }
-
-            return tasks;
-        }
     }
 }

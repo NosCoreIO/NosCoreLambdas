@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace NosCore.Travis
+namespace NosCore.Shared.Discord
 {
     public class Embed
     {
