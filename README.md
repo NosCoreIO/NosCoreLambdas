@@ -3,7 +3,6 @@
 </p>
 
 # NosCore #
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5601a6d1e4224338b142c76bdeb8f9eb)](https://app.codacy.com/app/NosCoreIO/NosCoreBot?utm_source=github.com&utm_medium=referral&utm_content=NosCoreIO/NosCoreBot&utm_campaign=Badge_Grade_Settings)
 [![Travis build status](https://travis-ci.org/NosCoreIO/NosCoreLambdas.svg?branch=master)](https://travis-ci.org/NosCoreIO/NosCoreLambdas)
 
 ## You like our work ? ##
