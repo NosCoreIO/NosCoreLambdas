@@ -21,6 +21,7 @@ before_script:
 script:
   - dotnet --version
   - dotnet restore ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj
+  - dotnet restore ./NosCore.Donation/NosCore.Donation/NosCore.Donation.csproj
   - dotnet build ./NosCore.Travis/NosCore.Travis/NosCore.Travis.csproj -c Release
   - ./scripts/publish.sh
 env:
