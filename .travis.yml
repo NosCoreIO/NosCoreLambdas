@@ -29,7 +29,7 @@ script:
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
 deploy:
-  cleanup: false
+  skip_cleanup: true
   provider: script
   script: bash ./scripts/publish.sh
   on:
