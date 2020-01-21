@@ -18,8 +18,8 @@ install:
 before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
-  - pip install --user awscli
-  - pip install --user aws-sam-cli
+  - pip3 install --user awscli
+  - pip3 install --user aws-sam-cli
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
