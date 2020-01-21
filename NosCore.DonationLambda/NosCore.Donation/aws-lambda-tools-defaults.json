@@ -1,6 +1,6 @@
 
 {
-    "profile":"0Lucifer0",
+    "profile":"test",
     "region" : "us-west-2",
 	"configuration" : "Release",
 	"framework" : "netcoreapp2.1",
