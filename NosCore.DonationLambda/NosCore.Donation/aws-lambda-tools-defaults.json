@@ -1,20 +1,10 @@
 
 {
-	"Information" : [
-		"This file provides default values for the deployment wizard inside Visual Studio and the AWS Lambda commands added to the .NET Core CLI.",
-		"To learn more about the Lambda commands with the .NET Core CLI execute the following command at the command line in the project root directory.",
-
-		"dotnet lambda help",
-
-		"All the command line options for the Lambda command can be specified in this file."
-	],
-	
     "profile":"0Lucifer0",
     "region" : "us-west-2",
-	"function-name" : "noscore-donation",
 	"configuration" : "Release",
 	"framework"     : "netcoreapp2.1",
-	"s3-prefix"     : "noscore-donation/",
-	"template"      : "serverless.template",
-	"template-parameters" : "ShouldCreateBucket=true;BucketName=translation"
+	"stack-name" : "noscore-donation",
+	"s3-bucket": "noscore-donation",
+	"template"      : "serverless.template"
 }
