@@ -4,6 +4,7 @@
 	"configuration" : "Release",
 	"framework" : "netcoreapp2.1",
 	"stack-name" : "noscore-donation",
+	"function-name" : "noscore-donation",
 	"s3-bucket": "noscore-donation",
 	"template" : "serverless.template"
 }
