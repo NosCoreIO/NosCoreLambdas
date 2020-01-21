@@ -19,10 +19,10 @@ before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo apt-get update
+  - sudo apt-get install python3-setuptools
   - sudo apt-get install python3-pip
-  - sudo pip3 install awscli
-  - pip3 install --user awscli
-  - pip3 install --user aws-sam-cli
+  - sudo pip3 install --user awscli
+  - sudo pip3 install --user aws-sam-cli
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
