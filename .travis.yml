@@ -11,12 +11,12 @@ branches:
   only: master
 install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
-  - export PATH="$PATH:/home/travis/.local/bin"
   - export PATH="$PATH:$HOME/.local/bin"
-  - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo snap alias dotnet-sdk.dotnet dotnet
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
+  - chmod -R a+x scripts
+  - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo apt-get install python3-setuptools
   - sudo apt-get install python3-pip
   - pip3 install --user awscli
@@ -28,7 +28,6 @@ script:
   - dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
-  - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/serverless.template
 deploy:
   cleanup: false
   provider: script
