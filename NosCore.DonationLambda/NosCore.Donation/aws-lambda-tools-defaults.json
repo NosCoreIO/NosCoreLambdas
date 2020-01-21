@@ -11,9 +11,10 @@
 	
     "profile":"0Lucifer0",
     "region" : "us-west-2",
+	"function-name" : "noscore-donation",
 	"configuration" : "Release",
 	"framework"     : "netcoreapp2.1",
-	"s3-prefix"     : "NosCore.Donation/",
+	"s3-prefix"     : "noscore-donation/",
 	"template"      : "serverless.template",
-	"template-parameters" : "ShouldCreateBucket=true;BucketName="
+	"template-parameters" : "ShouldCreateBucket=true;BucketName=translation"
 }
