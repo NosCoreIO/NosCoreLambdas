@@ -26,8 +26,8 @@ script:
   - dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
-  - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/template.json
-  - sam package --template-file ./NosCore.DonationLambda/NosCore.Donation/template.json --s3-bucket noscore-donation --output-template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.yaml
+  - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/serverless.template
+  - sam package --template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.template --s3-bucket noscore-donation --output-template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.yaml
 deploy:
   skip_cleanup: true
   provider: script
