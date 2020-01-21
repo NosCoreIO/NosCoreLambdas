@@ -14,6 +14,6 @@ cd ./bin/Release/netcoreapp2.1/
 aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip > /dev/null;
 
 #serverless noscore-donation
-cd NosCore.DonationLambda/NosCore.Donation
+cd ../../../NosCore.DonationLambda/NosCore.Donation
 sam package --template-file serverless.template --s3-bucket noscore-donation --output-template-file serverless.yaml
 sam deploy --template-file serverless.yaml --stack-name noscore-donation --capabilities CAPABILITY_IAM
