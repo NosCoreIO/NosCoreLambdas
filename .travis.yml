@@ -18,6 +18,9 @@ install:
 before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
+  - sudo apt-get update
+  - sudo apt-get install python3-pip
+  - sudo pip3 install awscli
   - pip3 install --user awscli
   - pip3 install --user aws-sam-cli
 script:
