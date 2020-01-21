@@ -28,7 +28,6 @@ script:
   - dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
-  - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/serverless.template
 deploy:
   cleanup: false
   provider: script
