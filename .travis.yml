@@ -1,29 +1,27 @@
 language: csharp
 mono: none
-sudo: required
 dist: xenial
 addons:
     snaps:
       - name: dotnet-sdk
         confinement: classic
         channel: 2.1/stable
-    homebrew:
-        packages: aws-sam-cli
 solution: NosCore-Discord.sln
 branches:
   only: master
 install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
+  - export PATH="$PATH:/home/travis/.local/bin"
   - export PATH="$PATH:$HOME/.local/bin"
+  - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo snap alias dotnet-sdk.dotnet dotnet
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
-  - chmod -R a+x scripts
-  - export PATH="$PATH:$HOME/.dotnet/tools"
-  - sudo apt-get update
   - sudo apt-get install python3-setuptools
   - sudo apt-get install python3-pip
-  - sudo pip3 install --user awscli
+  - pip3 install --user awscli
+  - pip install --user aws-sam-cli
+  - sam --version
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
@@ -31,15 +29,14 @@ script:
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
   - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/serverless.template
-  - sam package --template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.template --s3-bucket noscore-donation --output-template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.yaml
 deploy:
-  skip_cleanup: true
+  cleanup: false
   provider: script
   script: bash ./scripts/publish.sh
-  after_deploy:
-   - ./scripts/after-success.sh
   on:
     branch: master
+after_deploy:
+   - ./scripts/after-success.sh
 env:
   global:
   - AWS_DEFAULT_REGION=us-west-2
