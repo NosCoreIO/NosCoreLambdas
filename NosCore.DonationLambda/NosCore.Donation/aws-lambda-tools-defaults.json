@@ -3,8 +3,8 @@
     "profile":"0Lucifer0",
     "region" : "us-west-2",
 	"configuration" : "Release",
-	"framework"     : "netcoreapp2.1",
+	"framework" : "netcoreapp2.1",
 	"stack-name" : "noscore-donation",
 	"s3-bucket": "noscore-donation",
-	"template"      : "serverless.template"
+	"template" : "serverless.template"
 }
