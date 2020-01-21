@@ -18,12 +18,24 @@ install:
 before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
+  - pip install --user awscli
+  - pip install --user aws-sam-cli
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
   - dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
-  - ./scripts/publish.sh
+  - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
+  - sam validate --template ./NosCore.DonationLambda/NosCore.Donation/template.json
+  - sam package --template-file ./NosCore.DonationLambda/NosCore.Donation/template.json --s3-bucket noscore-donation --output-template-file ./NosCore.DonationLambda/NosCore.Donation/serverless.yaml
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: bash ./scripts/publish.sh
+  after_deploy:
+   - ./scripts/after-success.sh
+  on:
+    branch: master
 env:
   global:
   - AWS_DEFAULT_REGION=us-west-2
