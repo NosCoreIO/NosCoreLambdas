@@ -3,7 +3,7 @@
     	"region" : "us-west-2",
 	"configuration" : "Release",
 	"framework" : "netcoreapp2.1",
-	"stack-name" : "noscore-donation",
+	"stack-name" : "noscore-",
 	"function-name" : "noscore-donation",
 	"s3-bucket": "noscore-donation",
 	"template" : "serverless.template"
