@@ -6,6 +6,7 @@
 	"Resources" : {
 
 			"AspNetCoreFunction" : {
+				"FunctionName" : "noscore-donation"
 				"Type" : "AWS::Serverless::Function",
 				"Properties": {
 				"Handler": "NosCore.DonationLambda::NosCore.Donation.LambdaEntryPoint::FunctionHandlerAsync",
