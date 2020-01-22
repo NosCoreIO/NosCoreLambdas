@@ -2,7 +2,7 @@
   <img src="https://cdn.discordapp.com/attachments/319565884454731795/426892646288457728/N2.png"/>
 </p>
 
-# NosCore Lambdas#
+# NosCore Lambdas #
 [![Travis build status](https://travis-ci.org/NosCoreIO/NosCoreLambdas.svg?branch=master)](https://travis-ci.org/NosCoreIO/NosCoreLambdas)
 
 # Special Thanks for Contributions #
