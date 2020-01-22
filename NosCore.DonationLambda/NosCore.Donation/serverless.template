@@ -8,7 +8,7 @@
 			"donation" : {
 				"Type" : "AWS::Serverless::Function",
 				"Properties": {
-				"Handler": "NosCore.DonationLambda::NosCore.Donation.LambdaEntryPoint::FunctionHandlerAsync",
+				"Handler": "NosCore.Donation::NosCore.Donation.LambdaEntryPoint::FunctionHandlerAsync",
 				"Runtime": "dotnetcore2.1",
 				"CodeUri": "",
 				"MemorySize": 256,
