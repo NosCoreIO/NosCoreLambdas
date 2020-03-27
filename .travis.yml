@@ -1,6 +1,7 @@
 language: csharp
 mono: none
 dist: xenial
+os: linux
 addons:
     snaps:
       - name: dotnet-sdk
@@ -12,13 +13,16 @@ branches:
 install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
   - export PATH="$PATH:$HOME/.local/bin"
-  - export DOTNET_ROOT=$HOME/dotnet
   - sudo snap alias dotnet-sdk.dotnet dotnet
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
   - export PATH="$PATH:$HOME/.dotnet/tools"
-  - pip install --user awscli
+  - sudo apt-get install python3-setuptools
+  - sudo apt-get install python3-pip
+  - pip3 install --user awscli
+  - pip install --user aws-sam-cli
+  - sam --version
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
@@ -26,7 +30,8 @@ script:
   - dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
   - dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
 deploy:
-  skip_cleanup: true
+  cleanup: false
+  edge: true
   provider: script
   script: bash ./scripts/publish.sh
   on:
