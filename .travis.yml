@@ -13,7 +13,7 @@ branches:
 install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
   - export PATH="$PATH:$HOME/.local/bin"
-  - sudo snap alias dotnet-sdk.dotnet dotnet
+  - snap alias dotnet-sdk.dotnet dotnet
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
