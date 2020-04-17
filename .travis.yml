@@ -17,11 +17,23 @@ install:
   - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
-  - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo apt-get install python3-setuptools
   - sudo apt-get install python3-pip
   - pip3 install awscli
   - pip3 install --user awscli
+  - export DOTNET_ROOT=/snap/dotnet-sdk/current
+  - export MSBuildSDKsPath=$DOTNET_ROOT/sdk/$(${DOTNET_ROOT}/dotnet --version)/Sdks
+  - export PATH="${PATH}:${DOTNET_ROOT}"
+  - export PATH="$PATH:$HOME/.dotnet/tools"
+  - sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+  - test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
+  - test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+  - test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
+  - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
+  - brew --version
+  - brew tap aws/tap
+  - brew install aws-sam-cli
+  - sam --version
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
