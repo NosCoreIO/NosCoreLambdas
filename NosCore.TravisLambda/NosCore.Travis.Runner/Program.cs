@@ -7,7 +7,7 @@ namespace NosCore.Travis.Runner
     {
         static async Task Main(string[] args)
         {
-            await Function.TravisCheck(new InputObject
+            await Function.TravisCheckAsync(new InputObject
             {
                 Build_Id = 639007564,
                 Travis_Branch = "master",
