@@ -3,9 +3,6 @@ mono: none
 dist: xenial
 os: linux
 addons:
-    homebrew:
-      packages:
-        update: true
     snaps:
       - name: dotnet-sdk
         confinement: classic
@@ -28,9 +25,7 @@ before_script:
   - export MSBuildSDKsPath=$DOTNET_ROOT/sdk/$(${DOTNET_ROOT}/dotnet --version)/Sdks
   - export PATH="${PATH}:${DOTNET_ROOT}"
   - export PATH="$PATH:$HOME/.dotnet/tools"
-  - brew tap aws/tap
-  - brew install aws-sam-cli
-  - sam --version
+  - sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
