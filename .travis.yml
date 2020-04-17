@@ -3,6 +3,9 @@ mono: none
 dist: xenial
 os: linux
 addons:
+    homebrew:
+      packages:
+        - aws-sam-cli
     snaps:
       - name: dotnet-sdk
         confinement: classic
@@ -25,14 +28,6 @@ before_script:
   - export MSBuildSDKsPath=$DOTNET_ROOT/sdk/$(${DOTNET_ROOT}/dotnet --version)/Sdks
   - export PATH="${PATH}:${DOTNET_ROOT}"
   - export PATH="$PATH:$HOME/.dotnet/tools"
-  - sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-  - sh -c "test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)"
-  - sh -c "test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  - sh -c "test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile"
-  - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
-  - brew --version
-  - brew tap aws/tap
-  - brew install aws-sam-cli
   - sam --version
 script:
   - dotnet --version
