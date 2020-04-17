@@ -15,7 +15,6 @@ EOL
 #lambda travis publish
 cd NosCore.TravisLambda/NosCore.Travis
 dotnet lambda package
-echo "package ready"
 cd ./bin/Release/netcoreapp3.1/
 aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip > /dev/null;
 
