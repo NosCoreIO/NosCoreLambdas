@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\NosCore.Shared\NosCore.Shared.csproj" />
+    <ProjectReference Include="..\..\NosCore.Shared\NosCore.LambdaShared.csproj" />
   </ItemGroup>
 
 </Project>

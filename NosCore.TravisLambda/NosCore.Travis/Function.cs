@@ -17,7 +17,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NosCore.Shared;
 using NosCore.Shared.Discord;
-using NosCore.Shared.Enumeration;
+using NosCore.Shared.Enumerations;
 using NosCore.Shared.S3;
 using JsonSerializer = Amazon.Lambda.Serialization.Json.JsonSerializer;
 
@@ -31,22 +31,22 @@ namespace NosCore.Travis
         private static readonly HttpClient Client = new HttpClient();
         public string FunctionHandler(InputObject input, ILambdaContext context)
         {
-            return TravisCheck(input).Result;
+            return TravisCheckAsync(input).Result;
         }
 
-        public static async Task<string> TravisCheck(InputObject input)
+        public static async Task<string> TravisCheckAsync(InputObject input)
         {
-            var commitDetails = await GetCommitDetails(input);
+            var commitDetails = await GetCommitDetailsAsync(input).ConfigureAwait(false);
             var newList = new Dictionary<RegionType, List<string>>();
             foreach (var type in Enum.GetValues(typeof(RegionType)).Cast<RegionType>())
             {
                 newList.Add(type, new List<string>());
             }
-            var oldList = S3Helper.GetS3File().Result;
+            var oldList = await S3Helper.GetS3File().ConfigureAwait(false);
             var country = JsonConvert.DeserializeObject<Dictionary<RegionType, string>>(Environment.GetEnvironmentVariable("language_webhooks"));
             var normal = Environment.GetEnvironmentVariable("dev_webhook");
 
-            var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt");
+            var text = await Client.GetStringAsync("https://api.travis-ci.org/v3/job/" + input.Build_Id + "/log.txt").ConfigureAwait(false);
 
             bool passed = input.Travis_Test_Result == 0;
             var countTranslation = 0;
@@ -131,7 +131,7 @@ namespace NosCore.Travis
                 }
 
                 Task.WaitAll(tasks.ToArray());
-                S3Helper.UploadS3(newList).Wait();
+                await S3Helper.UploadS3(newList).ConfigureAwait(false);
             }
 
             if (countTranslation > 0 && !string.IsNullOrEmpty(commitDetails.DiscordName))
@@ -148,10 +148,10 @@ namespace NosCore.Travis
             return "OK";
         }
 
-        static async Task<CommitDetails> GetCommitDetails(InputObject input)
+        static async Task<CommitDetails> GetCommitDetailsAsync(InputObject input)
         {
             var address = "https://github.com/" + input.Travis_Repo_Slug + "/commit/" + input.Travis_Commit;
-            var textgithub = await Client.GetStringAsync(address);
+            var textgithub = await Client.GetStringAsync(address).ConfigureAwait(false);
 
             var document = new HtmlDocument();
             document.LoadHtml(textgithub);

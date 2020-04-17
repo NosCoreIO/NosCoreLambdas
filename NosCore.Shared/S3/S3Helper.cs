@@ -8,7 +8,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Newtonsoft.Json;
-using NosCore.Shared.Enumeration;
+using NosCore.Shared.Enumerations;
 
 namespace NosCore.Shared.S3
 {
