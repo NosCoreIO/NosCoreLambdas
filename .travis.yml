@@ -20,6 +20,7 @@ before_script:
   - export PATH="$PATH:$HOME/.dotnet/tools"
   - sudo apt-get install python3-setuptools
   - sudo apt-get install python3-pip
+  - pip3 install awscli
   - pip3 install --user awscli
   - pip install --user aws-sam-cli
   - sam --version
