@@ -22,8 +22,6 @@ before_script:
   - sudo apt-get install python3-pip
   - pip3 install awscli
   - pip3 install --user awscli
-  - pip install --user aws-sam-cli
-  - sam --version
 script:
   - dotnet --version
   - dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
