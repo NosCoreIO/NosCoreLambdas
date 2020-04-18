@@ -13,4 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\NosCore.Shared\NosCore.LambdaShared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 </Project>
