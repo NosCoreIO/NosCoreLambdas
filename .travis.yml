@@ -14,7 +14,7 @@ install:
   - export PATH="$PATH:/home/travis/.dotnet/tools"
   - export PATH="$PATH:$HOME/.local/bin"
   - sudo snap alias dotnet-sdk.dotnet dotnet
-  - dotnet tool install -g Amazon.Lambda.Tools --version 4.3.0
+  - dotnet tool install -g Amazon.Lambda.Tools
 before_script:
   - chmod -R a+x scripts
   - sudo apt-get install python3-setuptools
