@@ -3,7 +3,7 @@
 </p>
 
 # NosCore Lambdas #
-[![Travis build status](https://travis-ci.org/NosCoreIO/NosCoreLambdas.svg?branch=master)](https://travis-ci.org/NosCoreIO/NosCoreLambdas)
+[![Travis build status](https://travis-ci.com/NosCoreIO/NosCoreLambdas.svg?branch=master)](https://travis-ci.com/NosCoreIO/NosCoreLambdas)
 
 # Special Thanks for Contributions #
 <p align="left">
