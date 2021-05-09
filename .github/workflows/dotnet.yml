@@ -25,6 +25,7 @@ jobs:
     
     - name: Package Lambda
       run: |
+        dotnet tool install -g Amazon.Lambda.Tools
         cd NosCore.TravisLambda/NosCore.Travis
         dotnet lambda package
         
