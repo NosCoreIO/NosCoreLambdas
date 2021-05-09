@@ -1,0 +1,37 @@
+name: .NET
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Run Unit Tests
+      run: |
+        dotnet --version
+        dotnet restore ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj
+        dotnet restore ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj
+        dotnet build ./NosCore.TravisLambda/NosCore.Travis/NosCore.Travis.csproj -c Release
+        dotnet build ./NosCore.DonationLambda/NosCore.Donation/NosCore.Donation.csproj -c Release
+    
+    - name: Package Lambda
+      run: dotnet lambda package
+      
+    - name: Deploy
+      if: github.ref == 'refs/heads/master'
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: us-west-2
+        function_name: noscore-travis
+        zip_file: NosCore.Travis.zip
