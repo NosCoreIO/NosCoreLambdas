@@ -28,6 +28,7 @@ jobs:
         dotnet tool install -g Amazon.Lambda.Tools
         cd NosCore.TravisLambda/NosCore.Travis
         dotnet lambda package
+        cp NosCore.Travis.zip ../../NosCore.Travis.zip
         
     - name: Deploy
       if: github.ref == 'refs/heads/master'
@@ -37,4 +38,4 @@ jobs:
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-west-2
         function_name: noscore-travis
-        zip_file: ./bin/Release/netcoreapp3.1/NosCore.Travis.zip
+        zip_file: NosCore.Travis.zip
