@@ -19,7 +19,7 @@ EOL
 #lambda travis publish
 cd NosCore.TravisLambda/NosCore.Travis
 dotnet lambda package
-cd ./bin/Release/netcoreapp3.1/
+cd ./bin/Release/net7.0/
 aws lambda update-function-code --function-name noscore-travis --zip-file fileb://NosCore.Travis.zip > /dev/null;
 
 #serverless noscore-donation

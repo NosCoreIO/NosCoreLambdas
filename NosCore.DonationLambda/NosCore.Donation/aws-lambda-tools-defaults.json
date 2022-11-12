@@ -1,7 +1,8 @@
 {
   "region": "us-west-2",
   "configuration": "Release",
-  "framework": "netcoreapp3.1",
+  "framework": "net7.0",
+  "function-runtime": "provided",
   "stack-name": "noscore-",
   "s3-bucket": "noscore-donation",
   "template": "serverless.template"
