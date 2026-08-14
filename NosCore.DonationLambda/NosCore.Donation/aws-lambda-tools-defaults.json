@@ -1,7 +1,7 @@
 {
   "region": "us-west-2",
   "configuration": "Release",
-  "framework": "net7.0",
+  "framework": "net8.0",
   "function-runtime": "provided",
   "stack-name": "noscore-",
   "s3-bucket": "noscore-donation",
