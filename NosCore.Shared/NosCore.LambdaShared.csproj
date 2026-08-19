@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="4.0.102.1" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.102.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NosCore.Shared" Version="6.0.0" />
   </ItemGroup>
