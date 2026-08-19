@@ -6,7 +6,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AWSSDK.S3" Version="4.0.102.1" />
-		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.100.8" />
+		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.100.9" />
 		<PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="10.2.0" />
 	</ItemGroup>
 
