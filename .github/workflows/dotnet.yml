@@ -31,7 +31,7 @@ jobs:
         
     - name: Deploy
       if: github.ref == 'refs/heads/master'
-      uses: appleboy/lambda-action@master
+      uses: appleboy/lambda-action@221b86a3dfe527f669ebb6cc725b247e3d7459f7 # master (2026-08)
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
