@@ -5,7 +5,7 @@
 		<AWSProjectType>Lambda</AWSProjectType>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="4.0.104.2" />
+		<PackageReference Include="AWSSDK.S3" Version="4.0.104.5" />
 		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.101.3" />
 		<PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="10.3.0" />
 	</ItemGroup>
