@@ -1,4 +1,4 @@
-﻿namespace NosCore.Shared.Discord
+namespace NosCore.Shared.Discord
 {
     public class Field
     {
