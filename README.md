@@ -31,7 +31,7 @@ dotnet build NosCore-Discord.sln
 ## Contributing
 
 Questions, ideas and pull requests are welcome; most of the discussion happens on [Discord](https://discord.gg/Eu3ETSw).
-Any editor that handles .NET 11 works: `dotnet build` and `dotnet test` run on Windows, Linux and macOS.
+Any editor that handles .NET 11 works: `dotnet build` runs on Windows, Linux and macOS. There are no test projects, so check a change by running the function it touches.
 In Visual Studio, [Roslynator](https://github.com/dotnet/roslynator) and
 [ReSharper](https://www.jetbrains.com/resharper/) help keep to the code style.
 
